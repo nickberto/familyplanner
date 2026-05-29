@@ -35,6 +35,7 @@
                         <h4>{{ entry.title }}</h4>
                         {% if entry.entry_type == 'task' %}
                             <form method="POST" action="{{ url_for('calendar.toggle_entry_done', entry_id=entry.id) }}" class="toggle-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="checkbox" {% if entry.is_done %}checked{% endif %} onchange="this.form.submit();" title="Abhaken/nicht abhaken">
                             </form>
                         {% endif %}
@@ -63,6 +64,7 @@
                     <div class="entry-actions">
                         <a href="{{ url_for('calendar.edit_entry', entry_id=entry.id) }}" class="btn-small">Bearbeiten</a>
                         <form method="POST" action="{{ url_for('calendar.delete_entry', entry_id=entry.id) }}" class="delete-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn-small btn-danger" onclick="return confirm('Diesen Eintrag löschen?');">Löschen</button>
                         </form>
                     </div>

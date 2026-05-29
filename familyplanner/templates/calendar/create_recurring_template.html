@@ -5,9 +5,9 @@
 {% block content %}
 <div class="form-container">
     <h2>Neue wiederkehrende Aufgabe erstellen</h2>
-    
+
     <form method="POST">
-        {{ csrf_token() }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="title">Aufgabentitel:</label>
             <input type="text" id="title" name="title" required placeholder="z.B. Bad putzen">

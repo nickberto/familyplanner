@@ -5,9 +5,8 @@
 {% block content %}
 <div class="form-container">
     <h2>Neuen Eintrag erstellen</h2>
-    
     <form method="POST" id="entry-form">
-        {{ csrf_token() }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="entry_type">Eintragstyp:</label>
             <select id="entry_type" name="entry_type" required onchange="updateFormFields()">
