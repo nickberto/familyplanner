@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Eintrag erstellen - Familienplaner{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Neuen Eintrag erstellen</h2>
+    
+    <form method="POST" id="entry-form">
+        {{ csrf_token() }}
+        <div class="form-group">
+            <label for="entry_type">Eintragstyp:</label>
+            <select id="entry_type" name="entry_type" required onchange="updateFormFields()">
+                <option value="">-- Bitte wählen --</option>
+                <option value="event">Ereignis</option>
+                <option value="task">Aufgabe</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="title">Titel:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Notizen:</label>
+            <textarea id="notes" name="notes" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="location">Ort:</label>
+            <input type="text" id="location" name="location">
+        </div>
+
+        <div id="event-fields" class="conditional-fields" style="display:none;">
+            <div class="form-group">
+                <label for="start_at">Startzeit:</label>
+                <input type="datetime-local" id="start_at" name="start_at">
+            </div>
+
+            <div class="form-group">
+                <label for="end_at">Endzeit:</label>
+                <input type="datetime-local" id="end_at" name="end_at">
+            </div>
+        </div>
+
+        <div id="task-fields" class="conditional-fields" style="display:none;">
+            <div class="form-group">
+                <label for="due_at">Fällig am:</label>
+                <input type="datetime-local" id="due_at" name="due_at">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Eintrag erstellen</button>
+            <a href="{{ url_for('calendar.week') }}" class="btn-secondary">Abbrechen</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function updateFormFields() {
+    const entryType = document.getElementById('entry_type').value;
+    const eventFields = document.getElementById('event-fields');
+    const taskFields = document.getElementById('task-fields');
+
+    eventFields.style.display = entryType === 'event' ? 'block' : 'none';
+    taskFields.style.display = entryType === 'task' ? 'block' : 'none';
+
+    // Set required attributes
+    if (entryType === 'event') {
+        document.getElementById('start_at').required = true;
+        document.getElementById('end_at').required = true;
+        document.getElementById('due_at').required = false;
+    } else if (entryType === 'task') {
+        document.getElementById('start_at').required = false;
+        document.getElementById('end_at').required = false;
+        document.getElementById('due_at').required = false;
+    }
+}
+</script>
+{% endblock %}

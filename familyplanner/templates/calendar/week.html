@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Wochenansicht - Familienplaner{% endblock %}
+
+{% block content %}
+<div class="week-view">
+    <div class="week-header">
+        <h2>Woche vom {{ week_start.strftime('%d. %B %Y') }}</h2>
+        <div class="week-navigation">
+            <a href="{{ url_for('calendar.week', date=prev_week.strftime('%Y-%m-%d')) }}" class="btn-nav">← Vorherige</a>
+            <a href="{{ url_for('calendar.week') }}" class="btn-nav">Heute</a>
+            <a href="{{ url_for('calendar.week', date=next_week.strftime('%Y-%m-%d')) }}" class="btn-nav">Nächste →</a>
+        </div>
+    </div>
+
+    <div class="week-actions">
+        <a href="{{ url_for('calendar.create_entry') }}" class="btn-primary">+ Neuer Eintrag</a>
+        <a href="{{ url_for('calendar.create_recurring_template') }}" class="btn-secondary">+ Wiederkehrende Aufgabe</a>
+    </div>
+
+    <div class="week-grid">
+        {% set weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] %}
+        {% for day_idx in range(7) %}
+        <div class="day-column">
+            <div class="day-header">
+                <h3>{{ weekdays[day_idx] }}</h3>
+                <p class="day-date">{{ (week_start + timedelta(days=day_idx)).strftime('%d. %b') }}</p>
+            </div>
+
+            <div class="entries">
+                {% set day_entries = grouped_entries[day_idx] %}
+                {% for entry in day_entries %}
+                <div class="entry entry-{{ entry.entry_type }} {% if entry.is_done %}entry-done{% endif %}">
+                    <div class="entry-header">
+                        <h4>{{ entry.title }}</h4>
+                        {% if entry.entry_type == 'task' %}
+                            <form method="POST" action="{{ url_for('calendar.toggle_entry_done', entry_id=entry.id) }}" class="toggle-form">
+                                <input type="checkbox" {% if entry.is_done %}checked{% endif %} onchange="this.form.submit();" title="Abhaken/nicht abhaken">
+                            </form>
+                        {% endif %}
+                    </div>
+
+                    {% if entry.start_at or entry.end_at %}
+                    <p class="entry-time">
+                        {{ entry.start_at.strftime('%H:%M') if entry.start_at }}
+                        {% if entry.start_at and entry.end_at %}-{% endif %}
+                        {{ entry.end_at.strftime('%H:%M') if entry.end_at }}
+                    </p>
+                    {% endif %}
+
+                    {% if entry.location %}
+                    <p class="entry-location">📍 {{ entry.location }}</p>
+                    {% endif %}
+
+                    {% if entry.notes %}
+                    <p class="entry-notes">{{ entry.notes }}</p>
+                    {% endif %}
+
+                    <div class="entry-meta">
+                        <small>Von {{ entry.updated_by.username if entry.updated_by else entry.created_by.username }} • {{ entry.updated_at.strftime('%d. %b, %H:%M') }}</small>
+                    </div>
+
+                    <div class="entry-actions">
+                        <a href="{{ url_for('calendar.edit_entry', entry_id=entry.id) }}" class="btn-small">Bearbeiten</a>
+                        <form method="POST" action="{{ url_for('calendar.delete_entry', entry_id=entry.id) }}" class="delete-form">
+                            <button type="submit" class="btn-small btn-danger" onclick="return confirm('Diesen Eintrag löschen?');">Löschen</button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <p class="empty-state">Keine Einträge</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="recurring-templates">
+        <h3>Wiederkehrende Aufgaben</h3>
+        {% set templates = get_flashed_messages() %}
+        <div class="template-list">
+            <!-- This will be populated from a query -->
+        </div>
+    </div>
+</div>
+
+<style>
+.toggle-form {
+    display: inline;
+}
+.delete-form {
+    display: inline;
+}
+.entry-done h4 {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Wiederkehrende Aufgabe bearbeiten - Familienplaner{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Wiederkehrende Aufgabe bearbeiten</h2>
+    
+    <form method="POST">
+        {{ csrf_token() }}
+        <div class="form-group">
+            <label for="title">Aufgabentitel:</label>
+            <input type="text" id="title" name="title" value="{{ template.title }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Notizen:</label>
+            <textarea id="notes" name="notes" rows="3">{{ template.notes }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="weekday">Wochentag:</label>
+            <select id="weekday" name="weekday" required>
+                <option value="0" {% if template.default_weekday == 0 %}selected{% endif %}>Montag</option>
+                <option value="1" {% if template.default_weekday == 1 %}selected{% endif %}>Dienstag</option>
+                <option value="2" {% if template.default_weekday == 2 %}selected{% endif %}>Mittwoch</option>
+                <option value="3" {% if template.default_weekday == 3 %}selected{% endif %}>Donnerstag</option>
+                <option value="4" {% if template.default_weekday == 4 %}selected{% endif %}>Freitag</option>
+                <option value="5" {% if template.default_weekday == 5 %}selected{% endif %}>Samstag</option>
+                <option value="6" {% if template.default_weekday == 6 %}selected{% endif %}>Sonntag</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="default_time_start">Startzeit (optional):</label>
+            <input type="time" id="default_time_start" name="default_time_start" value="{{ template.default_time_start.isoformat() if template.default_time_start else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="default_time_end">Endzeit (optional):</label>
+            <input type="time" id="default_time_end" name="default_time_end" value="{{ template.default_time_end.isoformat() if template.default_time_end else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="is_active">
+                <input type="checkbox" id="is_active" name="is_active" {% if template.is_active %}checked{% endif %}>
+                Aktiv
+            </label>
+        </div>
+
+        <div class="form-info">
+            <p><small>Erstellt von {{ template.created_by.username }} am {{ template.created_at.strftime('%d. %b %Y, %H:%M') }}</small></p>
+            <p><small>Zuletzt bearbeitet von {{ template.updated_by.username }} am {{ template.updated_at.strftime('%d. %b %Y, %H:%M') }}</small></p>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Vorlage aktualisieren</button>
+            <a href="{{ url_for('calendar.week') }}" class="btn-secondary">Abbrechen</a>
+            <form method="POST" action="{{ url_for('calendar.delete_recurring_template', template_id=template.id) }}" class="delete-form">
+                <button type="submit" class="btn-danger" onclick="return confirm('Diese Vorlage löschen? Bestehende Aufgabeninstanzen bleiben erhalten.');">Vorlage löschen</button>
+            </form>
+        </div>
+    </form>
+</div>
+{% endblock %}

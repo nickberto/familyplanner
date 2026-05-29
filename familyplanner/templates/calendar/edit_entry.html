@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Eintrag bearbeiten - Familienplaner{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Eintrag bearbeiten</h2>
+    
+    <form method="POST" id="entry-form">
+        {{ csrf_token() }}
+        <div class="form-group">
+            <label>Eintragstyp:</label>
+            <p>{{ entry.entry_type.title() }}</p>
+            <input type="hidden" name="entry_type" value="{{ entry.entry_type }}">
+        </div>
+
+        <div class="form-group">
+            <label for="title">Titel:</label>
+            <input type="text" id="title" name="title" value="{{ entry.title }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Notizen:</label>
+            <textarea id="notes" name="notes" rows="3">{{ entry.notes }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="location">Ort:</label>
+            <input type="text" id="location" name="location" value="{{ entry.location }}">
+        </div>
+
+        {% if entry.entry_type == 'event' %}
+        <div class="form-group">
+            <label for="start_at">Startzeit:</label>
+            <input type="datetime-local" id="start_at" name="start_at" value="{{ entry.start_at.isoformat() if entry.start_at else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="end_at">Endzeit:</label>
+            <input type="datetime-local" id="end_at" name="end_at" value="{{ entry.end_at.isoformat() if entry.end_at else '' }}" required>
+        </div>
+        {% endif %}
+
+        {% if entry.entry_type == 'task' %}
+        <div class="form-group">
+            <label for="due_at">Fällig am:</label>
+            <input type="datetime-local" id="due_at" name="due_at" value="{{ entry.due_at.isoformat() if entry.due_at else '' }}">
+        </div>
+        {% endif %}
+
+        <div class="entry-info">
+            <p><small>Erstellt von {{ entry.created_by.username }} am {{ entry.created_at.strftime('%d. %b %Y, %H:%M') }}</small></p>
+            <p><small>Zuletzt bearbeitet von {{ entry.updated_by.username }} am {{ entry.updated_at.strftime('%d. %b %Y, %H:%M') }}</small></p>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Eintrag aktualisieren</button>
+            <a href="{{ url_for('calendar.week') }}" class="btn-secondary">Abbrechen</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

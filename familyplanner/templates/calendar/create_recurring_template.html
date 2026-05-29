@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Wiederkehrende Aufgabe erstellen - Familienplaner{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Neue wiederkehrende Aufgabe erstellen</h2>
+    
+    <form method="POST">
+        {{ csrf_token() }}
+        <div class="form-group">
+            <label for="title">Aufgabentitel:</label>
+            <input type="text" id="title" name="title" required placeholder="z.B. Bad putzen">
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Notizen:</label>
+            <textarea id="notes" name="notes" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="weekday">Wochentag:</label>
+            <select id="weekday" name="weekday" required>
+                <option value="">-- Wählen --</option>
+                <option value="0">Montag</option>
+                <option value="1">Dienstag</option>
+                <option value="2">Mittwoch</option>
+                <option value="3">Donnerstag</option>
+                <option value="4">Freitag</option>
+                <option value="5">Samstag</option>
+                <option value="6">Sonntag</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="default_time_start">Startzeit (optional):</label>
+            <input type="time" id="default_time_start" name="default_time_start">
+        </div>
+
+        <div class="form-group">
+            <label for="default_time_end">Endzeit (optional):</label>
+            <input type="time" id="default_time_end" name="default_time_end">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Vorlage erstellen</button>
+            <a href="{{ url_for('calendar.week') }}" class="btn-secondary">Abbrechen</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
