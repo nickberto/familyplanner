@@ -18,9 +18,11 @@
             </div>
             <button type="submit" class="btn-primary">Anmelden</button>
         </form>
+        {% if config.REGISTRATION_ENABLED %}
         <p class="auth-link">
             Noch kein Konto? <a href="{{ url_for('auth.register') }}">Hier registrieren</a>
         </p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

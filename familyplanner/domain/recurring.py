@@ -26,6 +26,8 @@ def get_or_materialize_recurring_tasks(
     """
     week_start = get_week_start(reference_date)
     week_end = week_start + timedelta(days=6)
+    week_start_dt = datetime.combine(week_start, time.min)
+    week_end_dt = datetime.combine(week_end, time.max)
     
     # Get all active recurring task templates
     templates = RecurringTaskTemplate.query.filter_by(is_active=True).order_by(
@@ -38,34 +40,51 @@ def get_or_materialize_recurring_tasks(
         # Calculate the date for this template's weekday in this week
         target_date = week_start + timedelta(days=template.default_weekday)
         
-        # Check if an entry already exists for this template date
+        # Prefer explicit recurring-template relation for existing entries in this week.
         existing = Entry.query.filter(
-            Entry.entry_type == Entry.ENTRY_TYPE_TASK,
-            Entry.title == template.title,
-            db.func.date(Entry.due_at) == target_date
+            Entry.recurring_template_id == template.id,
+            Entry.due_at >= week_start_dt,
+            Entry.due_at <= week_end_dt,
         ).first()
         
         if existing:
             created_entries.append(existing)
-        else:
-            # Create a new entry from the template
-            due_datetime = datetime.combine(target_date, template.default_time_start or time.min)
-            
-            entry = Entry(
-                entry_type=Entry.ENTRY_TYPE_TASK,
-                title=template.title,
-                notes=template.notes,
-                location="",
-                start_at=None,
-                end_at=None,
-                due_at=due_datetime,
-                is_all_day=False,
-                is_done=False,
-                created_by_user_id=current_user_id,
-                updated_by_user_id=current_user_id,
-            )
-            db.session.add(entry)
-            created_entries.append(entry)
+            continue
+        
+        # Fallback for older entries created before the recurring link existed.
+        fallback = Entry.query.filter(
+            Entry.recurring_template_id.is_(None),
+            Entry.entry_type == Entry.ENTRY_TYPE_TASK,
+            Entry.title == template.title,
+            Entry.created_by_user_id == current_user_id,
+            db.func.date(Entry.due_at) == target_date,
+        ).first()
+        
+        if fallback:
+            fallback.recurring_template_id = template.id
+            db.session.add(fallback)
+            created_entries.append(fallback)
+            continue
+        
+        # Create a new entry from the template
+        due_datetime = datetime.combine(target_date, template.default_time_start or time.min)
+        
+        entry = Entry(
+            entry_type=Entry.ENTRY_TYPE_TASK,
+            title=template.title,
+            notes=template.notes,
+            location="",
+            start_at=None,
+            end_at=None,
+            due_at=due_datetime,
+            is_all_day=False,
+            is_done=False,
+            created_by_user_id=current_user_id,
+            updated_by_user_id=current_user_id,
+            recurring_template_id=template.id,
+        )
+        db.session.add(entry)
+        created_entries.append(entry)
     
     db.session.commit()
     return created_entries
@@ -98,20 +117,36 @@ def get_entries_for_week(reference_date: date) -> List[Entry]:
 
 def entries_by_weekday(entries: List[Entry]) -> dict:
     """
-    Group entries by weekday (0=Monday, 6=Sunday).
+    Group entries by weekday (0-6 = Mon-Sun).
     
     Args:
         entries: List of Entry instances.
     
     Returns:
-        Dictionary mapping Weekday values to lists of entries.
+        Dictionary with weekday as key and list of entries as value.
     """
-    grouped = {i: [] for i in range(7)}
+    from familyplanner.domain.week import date_to_weekday
     
+    grouped = {i: [] for i in range(7)}
     for entry in entries:
-        dt = entry.start_at or entry.due_at or entry.end_at
-        if dt:
-            weekday = dt.date().weekday()
-            grouped[weekday].append(entry)
+        if entry.due_at:
+            weekday = date_to_weekday(entry.due_at.date()).value
+        elif entry.start_at:
+            weekday = date_to_weekday(entry.start_at.date()).value
+        else:
+            continue
+        grouped[weekday].append(entry)
     
     return grouped
+
+
+def get_active_recurring_templates() -> List[RecurringTaskTemplate]:
+    """
+    Get all active recurring task templates, sorted by sort_order.
+    
+    Returns:
+        List of active RecurringTaskTemplate instances.
+    """
+    return RecurringTaskTemplate.query.filter_by(is_active=True).order_by(
+        RecurringTaskTemplate.sort_order
+    ).all()

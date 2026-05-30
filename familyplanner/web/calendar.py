@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from familyplanner.models import db, Entry, RecurringTaskTemplate, utc_now
 from familyplanner.domain.week import get_week_start, get_week_range
-from familyplanner.domain.recurring import get_entries_for_week, entries_by_weekday, get_or_materialize_recurring_tasks
+from familyplanner.domain.recurring import get_entries_for_week, entries_by_weekday, get_or_materialize_recurring_tasks, get_active_recurring_templates
 
 bp = Blueprint("calendar", __name__, url_prefix="/")
 
@@ -50,6 +50,7 @@ def week():
         week_start=week_start,
         entries=entries,
         grouped_entries=grouped,
+        recurring_templates=get_active_recurring_templates(),
         prev_week=prev_week,
         next_week=next_week,
         current_user=current_user,

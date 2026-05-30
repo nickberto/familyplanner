@@ -29,6 +29,9 @@ class Config:
     # Security
     REMEMBER_COOKIE_SECURE = os.environ.get("ENV") == "production"
     REMEMBER_COOKIE_HTTPONLY = True
+    
+    # Registration
+    REGISTRATION_ENABLED = True
 
 
 class DevelopmentConfig(Config):
@@ -42,6 +45,7 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     WTF_CSRF_ENABLED = False
+    REGISTRATION_ENABLED = True  # Enable registration for tests
     WTF_CSRF_ENABLED = False
 
 

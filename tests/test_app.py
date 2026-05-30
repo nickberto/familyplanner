@@ -21,6 +21,7 @@ def app():
     app.config["TESTING"] = True
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
     app.config["WTF_CSRF_ENABLED"] = False  # Disable CSRF for tests
+    app.config["REGISTRATION_ENABLED"] = True  # Enable registration for tests
     
     with app.app_context():
         db.create_all()
@@ -171,5 +172,149 @@ class TestEntryCreation:
             assert entry.entry_type == "event"
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+class TestRecurringTaskGeneration:
+    """Test recurring task materialization and deduplication."""
+
+    def test_materializes_recurring_task_entry(self, app):
+        with app.app_context():
+            user = User(username="testuser")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+
+            template = RecurringTaskTemplate(
+                title="Weekly Review",
+                notes="Review tasks",
+                default_weekday=0,
+                default_time_start=None,
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+            )
+            db.session.add(template)
+            db.session.commit()
+
+            from familyplanner.domain.recurring import get_or_materialize_recurring_tasks
+
+            entries = get_or_materialize_recurring_tasks(date(2026, 5, 27), user.id)
+            assert len(entries) == 1
+            entry = entries[0]
+            assert entry.recurring_template_id == template.id
+            assert entry.title == "Weekly Review"
+            assert entry.due_at.date() == date(2026, 5, 25) or entry.due_at.date() == date(2026, 5, 27)
+
+    def test_does_not_duplicate_when_moved_within_same_week(self, app):
+        with app.app_context():
+            user = User(username="testuser")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+
+            template = RecurringTaskTemplate(
+                title="Weekly Review",
+                notes="Review tasks",
+                default_weekday=0,
+                default_time_start=None,
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+            )
+            db.session.add(template)
+            db.session.commit()
+
+            moved_entry = Entry(
+                entry_type=Entry.ENTRY_TYPE_TASK,
+                title="Weekly Review",
+                notes="Review tasks",
+                location="",
+                due_at=datetime(2026, 5, 26, 9, 0),
+                is_all_day=False,
+                is_done=False,
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+                recurring_template_id=template.id,
+            )
+            db.session.add(moved_entry)
+            db.session.commit()
+
+            from familyplanner.domain.recurring import get_or_materialize_recurring_tasks
+
+            entries = get_or_materialize_recurring_tasks(date(2026, 5, 27), user.id)
+            assert len(entries) == 1
+            assert entries[0].id == moved_entry.id
+
+    def test_sets_relationship_for_legacy_entry(self, app):
+        with app.app_context():
+            user = User(username="testuser")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+
+            template = RecurringTaskTemplate(
+                title="Weekly Review",
+                notes="Review tasks",
+                default_weekday=0,
+                default_time_start=None,
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+            )
+            db.session.add(template)
+            db.session.commit()
+
+            legacy_entry = Entry(
+                entry_type=Entry.ENTRY_TYPE_TASK,
+                title="Weekly Review",
+                notes="Review tasks",
+                location="",
+                due_at=datetime(2026, 5, 25, 9, 0),
+                is_all_day=False,
+                is_done=False,
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+            )
+            db.session.add(legacy_entry)
+            db.session.commit()
+
+            from familyplanner.domain.recurring import get_or_materialize_recurring_tasks
+
+            entries = get_or_materialize_recurring_tasks(date(2026, 5, 27), user.id)
+            assert len(entries) == 1
+            assert entries[0].id == legacy_entry.id
+            assert entries[0].recurring_template_id == template.id
+
+    def test_creates_new_entry_for_next_week(self, app):
+        with app.app_context():
+            user = User(username="testuser")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+
+            template = RecurringTaskTemplate(
+                title="Weekly Review",
+                notes="Review tasks",
+                default_weekday=0,
+                default_time_start=None,
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+            )
+            db.session.add(template)
+            db.session.commit()
+
+            previous_week_entry = Entry(
+                entry_type=Entry.ENTRY_TYPE_TASK,
+                title="Weekly Review",
+                notes="Review tasks",
+                location="",
+                due_at=datetime(2026, 5, 18, 9, 0),
+                is_all_day=False,
+                is_done=False,
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+                recurring_template_id=template.id,
+            )
+            db.session.add(previous_week_entry)
+            db.session.commit()
+
+            from familyplanner.domain.recurring import get_or_materialize_recurring_tasks
+
+            entries = get_or_materialize_recurring_tasks(date(2026, 5, 27), user.id)
+            assert len(entries) == 1
+            assert entries[0].id != previous_week_entry.id

@@ -6,6 +6,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from familyplanner.config import get_config
 from familyplanner.models import db, User
+from familyplanner.domain.week import GermanDateFormatter
 
 
 def create_app(config=None) -> Flask:
@@ -40,6 +41,9 @@ def create_app(config=None) -> Flask:
     def load_user(user_id):
         """Load user by ID for session management."""
         return User.query.get(int(user_id))
+    
+    # Register Jinja filters
+    app.jinja_env.filters['format_german_date'] = GermanDateFormatter.format_date
     
     # Create database tables
     with app.app_context():

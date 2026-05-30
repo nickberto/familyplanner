@@ -1,7 +1,7 @@
 """
 Authentication routes and forms.
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from familyplanner.models import db, User
 
@@ -11,6 +11,11 @@ bp = Blueprint("auth", __name__, url_prefix="/auth")
 @bp.route("/register", methods=["GET", "POST"])
 def register():
     """Handle user registration."""
+    # Check if registration is enabled
+    if not current_app.config.get("REGISTRATION_ENABLED", False):
+        flash("Registrierung ist nicht aktiviert.", "error")
+        return redirect(url_for("auth.login"))
+    
     if current_user.is_authenticated:
         return redirect(url_for("calendar.week"))
     

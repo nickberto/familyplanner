@@ -287,6 +287,82 @@ main {
 .week-actions {
     display: flex;
     gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.recurring-templates-section {
+    background-color: white;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.recurring-templates-section h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--color-text);
+}
+
+.recurring-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.recurring-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.recurring-item:last-child {
+    border-bottom: none;
+}
+
+.template-title {
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.template-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.entry-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.inline-form,
+.delete-form {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.toggle-form {
+    display: inline;
+}
+
+.template-actions > a,
+.template-actions > .inline-form,
+.entry-actions > a,
+.entry-actions > .delete-form {
+    min-width: 0;
+}
+
+.template-actions .inline-form button,
+.entry-actions .delete-form button {
+    width: 100%;
 }
 
 .week-grid {
@@ -405,15 +481,6 @@ main {
     padding-top: 0.25rem;
 }
 
-.entry-actions {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.delete-form {
-    display: inline;
-}
-
 .entry-done h4 {
     text-decoration: line-through;
     opacity: 0.7;
@@ -466,6 +533,19 @@ footer {
 
     .form-actions button,
     .form-actions a {
+        width: 100%;
+    }
+
+    .entry-actions,
+    .template-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .entry-actions > a,
+    .entry-actions > .delete-form,
+    .template-actions > a,
+    .template-actions > .inline-form {
         width: 100%;
     }
 }

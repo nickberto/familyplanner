@@ -2,7 +2,7 @@
 Domain logic for week calculations and date handling.
 """
 from datetime import datetime, timedelta, date, time
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 from enum import IntEnum
 
 
@@ -87,6 +87,31 @@ def get_week_days(reference_date: date) -> List[date]:
 def date_to_weekday(target_date: date) -> Weekday:
     """Convert a date to its Weekday value."""
     return Weekday.from_iso(target_date.isoweekday())
+
+
+class GermanDateFormatter:
+    """Format dates in German."""
+    
+    GERMAN_MONTHS = {
+        1: "Januar", 2: "Februar", 3: "März", 4: "April",
+        5: "Mai", 6: "Juni", 7: "Juli", 8: "August",
+        9: "September", 10: "Oktober", 11: "November", 12: "Dezember"
+    }
+    
+    GERMAN_WEEKDAYS = {
+        0: "Montag", 1: "Dienstag", 2: "Mittwoch", 3: "Donnerstag",
+        4: "Freitag", 5: "Samstag", 6: "Sonntag"
+    }
+    
+    @classmethod
+    def format_date(cls, date_obj: datetime, format_str: str = "%d. %B %Y") -> str:
+        """
+        Format a date in German.
+        Replaces %B with German month name.
+        """
+        month_name = cls.GERMAN_MONTHS.get(date_obj.month, "")
+        format_str = format_str.replace("%B", month_name)
+        return date_obj.strftime(format_str)
 
 
 class EventValidator:

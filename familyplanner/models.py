@@ -71,6 +71,14 @@ class Entry(db.Model):
     updated_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now, nullable=False)
     
+    # Track if this entry was created from a recurring template
+    recurring_template_id = db.Column(db.Integer, db.ForeignKey("recurring_task_templates.id"), nullable=True)
+    recurring_template = db.relationship(
+        "RecurringTaskTemplate",
+        backref="entries",
+        foreign_keys=[recurring_template_id],
+    )
+
     __table_args__ = (
         db.Index("idx_entry_type", "entry_type"),
         db.Index("idx_entry_start_at", "start_at"),

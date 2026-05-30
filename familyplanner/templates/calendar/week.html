@@ -5,7 +5,7 @@
 {% block content %}
 <div class="week-view">
     <div class="week-header">
-        <h2>Woche vom {{ week_start.strftime('%d. %B %Y') }}</h2>
+        <h2>Woche vom {{ week_start|format_german_date }}</h2>
         <div class="week-navigation">
             <a href="{{ url_for('calendar.week', date=prev_week.strftime('%Y-%m-%d')) }}" class="btn-nav">← Vorherige</a>
             <a href="{{ url_for('calendar.week') }}" class="btn-nav">Heute</a>
@@ -17,6 +17,26 @@
         <a href="{{ url_for('calendar.create_entry') }}" class="btn-primary">+ Neuer Eintrag</a>
         <a href="{{ url_for('calendar.create_recurring_template') }}" class="btn-secondary">+ Wiederkehrende Aufgabe</a>
     </div>
+
+    {% if recurring_templates %}
+    <div class="recurring-templates-section">
+        <h3>Wiederkehrende Aufgaben</h3>
+        <ul class="recurring-list">
+        {% for template in recurring_templates %}
+            <li class="recurring-item">
+                <span class="template-title">{{ template.title }}</span>
+                <div class="template-actions">
+                    <a href="{{ url_for('calendar.edit_recurring_template', template_id=template.id) }}" class="btn-small">Bearbeiten</a>
+                    <form method="POST" action="{{ url_for('calendar.delete_recurring_template', template_id=template.id) }}" class="inline-form" onsubmit="return confirm('Wirklich löschen?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn-small btn-danger">Löschen</button>
+                    </form>
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 
     <div class="week-grid">
         {% set weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] %}
@@ -76,26 +96,5 @@
         </div>
         {% endfor %}
     </div>
-
-    <div class="recurring-templates">
-        <h3>Wiederkehrende Aufgaben</h3>
-        {% set templates = get_flashed_messages() %}
-        <div class="template-list">
-            <!-- This will be populated from a query -->
-        </div>
-    </div>
 </div>
-
-<style>
-.toggle-form {
-    display: inline;
-}
-.delete-form {
-    display: inline;
-}
-.entry-done h4 {
-    text-decoration: line-through;
-    opacity: 0.6;
-}
-</style>
 {% endblock %}
