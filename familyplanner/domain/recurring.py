@@ -1,26 +1,25 @@
 """
 Recurring task logic and materialization.
 """
-from datetime import datetime, date, time, timedelta
-from typing import List, Optional
-from familyplanner.models import db, Entry, RecurringTaskTemplate
-from familyplanner.domain.week import get_week_start, get_week_days, Weekday
+
+from datetime import date, datetime, time, timedelta
+from typing import List
+
+from familyplanner.domain.week import get_week_start
+from familyplanner.models import Entry, RecurringTaskTemplate, db
 
 
-def get_or_materialize_recurring_tasks(
-    reference_date: date, 
-    current_user_id: int
-) -> List[Entry]:
+def get_or_materialize_recurring_tasks(reference_date: date, current_user_id: int) -> List[Entry]:
     """
     Get recurring task instances for the given week.
-    
+
     This materializes recurring task templates into concrete Entry instances
     for the specified week if they don't already exist.
-    
+
     Args:
         reference_date: Any date in the desired week.
         current_user_id: User ID for attribution.
-    
+
     Returns:
         List of Entry instances (created or existing) for the week.
     """
@@ -28,29 +27,31 @@ def get_or_materialize_recurring_tasks(
     week_end = week_start + timedelta(days=6)
     week_start_dt = datetime.combine(week_start, time.min)
     week_end_dt = datetime.combine(week_end, time.max)
-    
+
     # Get all active recurring task templates
-    templates = RecurringTaskTemplate.query.filter_by(is_active=True).order_by(
-        RecurringTaskTemplate.sort_order
-    ).all()
-    
+    templates = (
+        RecurringTaskTemplate.query.filter_by(is_active=True)
+        .order_by(RecurringTaskTemplate.sort_order)
+        .all()
+    )
+
     created_entries = []
-    
+
     for template in templates:
         # Calculate the date for this template's weekday in this week
         target_date = week_start + timedelta(days=template.default_weekday)
-        
+
         # Prefer explicit recurring-template relation for existing entries in this week.
         existing = Entry.query.filter(
             Entry.recurring_template_id == template.id,
             Entry.due_at >= week_start_dt,
             Entry.due_at <= week_end_dt,
         ).first()
-        
+
         if existing:
             created_entries.append(existing)
             continue
-        
+
         # Fallback for older entries created before the recurring link existed.
         fallback = Entry.query.filter(
             Entry.recurring_template_id.is_(None),
@@ -59,16 +60,16 @@ def get_or_materialize_recurring_tasks(
             Entry.created_by_user_id == current_user_id,
             db.func.date(Entry.due_at) == target_date,
         ).first()
-        
+
         if fallback:
             fallback.recurring_template_id = template.id
             db.session.add(fallback)
             created_entries.append(fallback)
             continue
-        
+
         # Create a new entry from the template
         due_datetime = datetime.combine(target_date, template.default_time_start or time.min)
-        
+
         entry = Entry(
             entry_type=Entry.ENTRY_TYPE_TASK,
             title=template.title,
@@ -85,7 +86,7 @@ def get_or_materialize_recurring_tasks(
         )
         db.session.add(entry)
         created_entries.append(entry)
-    
+
     db.session.commit()
     return created_entries
 
@@ -93,40 +94,41 @@ def get_or_materialize_recurring_tasks(
 def get_entries_for_week(reference_date: date) -> List[Entry]:
     """
     Get all entries (events and tasks) for the given week.
-    
+
     Args:
         reference_date: Any date in the desired week.
-    
+
     Returns:
         List of Entry instances sorted by date/time.
     """
     week_start = datetime.combine(get_week_start(reference_date), time.min)
-    week_end = datetime.combine(
-        get_week_start(reference_date) + timedelta(days=6),
-        time.max
+    week_end = datetime.combine(get_week_start(reference_date) + timedelta(days=6), time.max)
+
+    entries = (
+        Entry.query.filter(
+            (Entry.start_at.between(week_start, week_end))
+            | (Entry.due_at.between(week_start, week_end))
+            | (Entry.end_at.between(week_start, week_end))
+        )
+        .order_by(Entry.start_at, Entry.due_at)
+        .all()
     )
-    
-    entries = Entry.query.filter(
-        (Entry.start_at.between(week_start, week_end)) |
-        (Entry.due_at.between(week_start, week_end)) |
-        (Entry.end_at.between(week_start, week_end))
-    ).order_by(Entry.start_at, Entry.due_at).all()
-    
+
     return entries
 
 
 def entries_by_weekday(entries: List[Entry]) -> dict:
     """
     Group entries by weekday (0-6 = Mon-Sun).
-    
+
     Args:
         entries: List of Entry instances.
-    
+
     Returns:
         Dictionary with weekday as key and list of entries as value.
     """
     from familyplanner.domain.week import date_to_weekday
-    
+
     grouped = {i: [] for i in range(7)}
     for entry in entries:
         if entry.due_at:
@@ -136,17 +138,19 @@ def entries_by_weekday(entries: List[Entry]) -> dict:
         else:
             continue
         grouped[weekday].append(entry)
-    
+
     return grouped
 
 
 def get_active_recurring_templates() -> List[RecurringTaskTemplate]:
     """
     Get all active recurring task templates, sorted by sort_order.
-    
+
     Returns:
         List of active RecurringTaskTemplate instances.
     """
-    return RecurringTaskTemplate.query.filter_by(is_active=True).order_by(
-        RecurringTaskTemplate.sort_order
-    ).all()
+    return (
+        RecurringTaskTemplate.query.filter_by(is_active=True)
+        .order_by(RecurringTaskTemplate.sort_order)
+        .all()
+    )

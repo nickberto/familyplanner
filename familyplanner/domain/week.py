@@ -1,13 +1,15 @@
 """
 Domain logic for week calculations and date handling.
 """
-from datetime import datetime, timedelta, date, time
-from typing import Tuple, List, Dict
+
+from datetime import date, datetime, time, timedelta
 from enum import IntEnum
+from typing import ClassVar, List, Tuple
 
 
 class Weekday(IntEnum):
     """Weekday constants (Monday=0, Sunday=6)."""
+
     MONDAY = 0
     TUESDAY = 1
     WEDNESDAY = 2
@@ -15,12 +17,12 @@ class Weekday(IntEnum):
     FRIDAY = 4
     SATURDAY = 5
     SUNDAY = 6
-    
+
     @classmethod
     def from_iso(cls, iso_weekday: int) -> "Weekday":
         """Convert ISO weekday (Monday=1) to Weekday (Monday=0)."""
         return cls((iso_weekday - 1) % 7)
-    
+
     def to_iso(self) -> int:
         """Convert to ISO weekday (Monday=1)."""
         return self.value + 1
@@ -29,10 +31,10 @@ class Weekday(IntEnum):
 def get_week_start(reference_date: date) -> date:
     """
     Get the Monday of the week containing the reference date.
-    
+
     Args:
         reference_date: Any date in the desired week.
-    
+
     Returns:
         The Monday of that week.
     """
@@ -44,10 +46,10 @@ def get_week_start(reference_date: date) -> date:
 def get_week_end(reference_date: date) -> date:
     """
     Get the Sunday of the week containing the reference date.
-    
+
     Args:
         reference_date: Any date in the desired week.
-    
+
     Returns:
         The Sunday of that week.
     """
@@ -58,10 +60,10 @@ def get_week_end(reference_date: date) -> date:
 def get_week_range(reference_date: date) -> Tuple[datetime, datetime]:
     """
     Get the week's datetime range (Monday 00:00 to Sunday 23:59:59).
-    
+
     Args:
         reference_date: Any date in the desired week.
-    
+
     Returns:
         Tuple of (start_datetime, end_datetime) in UTC.
     """
@@ -73,10 +75,10 @@ def get_week_range(reference_date: date) -> Tuple[datetime, datetime]:
 def get_week_days(reference_date: date) -> List[date]:
     """
     Get list of all dates in the week (Monday through Sunday).
-    
+
     Args:
         reference_date: Any date in the desired week.
-    
+
     Returns:
         List of 7 dates starting from Monday.
     """
@@ -91,18 +93,32 @@ def date_to_weekday(target_date: date) -> Weekday:
 
 class GermanDateFormatter:
     """Format dates in German."""
-    
-    GERMAN_MONTHS = {
-        1: "Januar", 2: "Februar", 3: "März", 4: "April",
-        5: "Mai", 6: "Juni", 7: "Juli", 8: "August",
-        9: "September", 10: "Oktober", 11: "November", 12: "Dezember"
+
+    GERMAN_MONTHS: ClassVar[dict[int, str]] = {
+        1: "Januar",
+        2: "Februar",
+        3: "März",
+        4: "April",
+        5: "Mai",
+        6: "Juni",
+        7: "Juli",
+        8: "August",
+        9: "September",
+        10: "Oktober",
+        11: "November",
+        12: "Dezember",
     }
-    
-    GERMAN_WEEKDAYS = {
-        0: "Montag", 1: "Dienstag", 2: "Mittwoch", 3: "Donnerstag",
-        4: "Freitag", 5: "Samstag", 6: "Sonntag"
+
+    GERMAN_WEEKDAYS: ClassVar[dict[int, str]] = {
+        0: "Montag",
+        1: "Dienstag",
+        2: "Mittwoch",
+        3: "Donnerstag",
+        4: "Freitag",
+        5: "Samstag",
+        6: "Sonntag",
     }
-    
+
     @classmethod
     def format_date(cls, date_obj: datetime, format_str: str = "%d. %B %Y") -> str:
         """
@@ -116,16 +132,16 @@ class GermanDateFormatter:
 
 class EventValidator:
     """Validate event business rules."""
-    
+
     @staticmethod
     def validate_event_times(start_at: datetime, end_at: datetime) -> Tuple[bool, str]:
         """
         Validate that end_at > start_at.
-        
+
         Args:
             start_at: Event start time.
             end_at: Event end time.
-        
+
         Returns:
             Tuple of (is_valid, error_message).
         """
@@ -136,15 +152,15 @@ class EventValidator:
 
 class TaskValidator:
     """Validate task business rules."""
-    
+
     @staticmethod
     def validate_task(title: str) -> Tuple[bool, str]:
         """
         Validate task fields.
-        
+
         Args:
             title: Task title.
-        
+
         Returns:
             Tuple of (is_valid, error_message).
         """

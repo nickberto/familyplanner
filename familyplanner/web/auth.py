@@ -1,9 +1,11 @@
 """
 Authentication routes and forms.
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
-from flask_login import login_user, logout_user, login_required, current_user
-from familyplanner.models import db, User
+
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
+
+from familyplanner.models import User, db
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -15,46 +17,46 @@ def register():
     if not current_app.config.get("REGISTRATION_ENABLED", False):
         flash("Registrierung ist nicht aktiviert.", "error")
         return redirect(url_for("auth.login"))
-    
+
     if current_user.is_authenticated:
         return redirect(url_for("calendar.week"))
-    
+
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
-        
+
         # Validation
         if not username:
             flash("Benutzername ist erforderlich", "error")
             return redirect(url_for("auth.register"))
-        
+
         if len(username) < 3:
             flash("Benutzername muss mindestens 3 Zeichen lang sein", "error")
             return redirect(url_for("auth.register"))
-        
+
         if not password:
             flash("Passwort ist erforderlich", "error")
             return redirect(url_for("auth.register"))
-        
+
         if len(password) < 6:
             flash("Passwort muss mindestens 6 Zeichen lang sein", "error")
             return redirect(url_for("auth.register"))
-        
+
         # Check if user exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             flash("Benutzername existiert bereits", "error")
             return redirect(url_for("auth.register"))
-        
+
         # Create new user
         user = User(username=username)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-        
+
         flash("Registrierung erfolgreich! Bitte melden Sie sich an.", "success")
         return redirect(url_for("auth.login"))
-    
+
     return render_template("auth/register.html")
 
 
@@ -63,22 +65,22 @@ def login():
     """Handle user login."""
     if current_user.is_authenticated:
         return redirect(url_for("calendar.week"))
-    
+
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
-        
+
         if not username or not password:
             flash("Benutzername und Passwort sind erforderlich", "error")
             return redirect(url_for("auth.login"))
-        
+
         user = User.query.filter_by(username=username).first()
-        
+
         if user and user.check_password(password):
             if not user.is_active:
                 flash("Dieses Konto ist inaktiv", "error")
                 return redirect(url_for("auth.login"))
-            
+
             login_user(user, remember=True)
             next_page = request.args.get("next")
             if next_page and next_page.startswith("/"):
@@ -87,7 +89,7 @@ def login():
         else:
             flash("Benutzername oder Passwort ungültig", "error")
             return redirect(url_for("auth.login"))
-    
+
     return render_template("auth/login.html")
 
 

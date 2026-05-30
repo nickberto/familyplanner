@@ -31,7 +31,35 @@ python wsgi.py
 pytest tests/ -v
 ```
 
-All tests pass (9/9). One unavoidable deprecation warning from Flask-Login internals.
+## Code Quality
+
+Run all checks (linting, formatting, security, tests):
+
+```bash
+bash scripts/quality-check.sh
+```
+
+Or run individual tools:
+
+```bash
+# Linting
+ruff check familyplanner tests
+
+# Format check
+black --check familyplanner tests
+
+# Auto-format code
+black familyplanner tests
+
+# Security checks
+bandit -r familyplanner
+```
+
+Tools:
+- **Ruff** — Fast Python linter with import sorting
+- **Black** — Code formatter (line length: 100)
+- **Bandit** — Security checks
+- **Pytest** — Test runner configured in `pyproject.toml`
 
 ## Development
 
@@ -62,7 +90,7 @@ familyplanner/
 ### Models
 
 - **User**: username, password_hash, is_active
-- **Entry**: event/task, title, notes, location, times, is_done, audit trail
+- **Entry**: event/task, title, notes, location, times, is_done, audit trail, recurring_template_id (nullable, links to origin template)
 - **RecurringTaskTemplate**: title, weekday, times, is_active, sort_order, audit trail
 
 ### Configuration
@@ -76,7 +104,7 @@ Environment variables (see `config.py`):
 ### Key Features
 
 - Events (start/end times) and Tasks (due date)
-- Recurring task templates auto-materialize weekly
+- Recurring task templates auto-materialize weekly with explicit linkage to prevent duplication
 - Audit trail (who, when for each change)
 - German UI with locale-aware date formatting
 - CSRF protection, secure cookies, password hashing
