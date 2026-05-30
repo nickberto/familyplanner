@@ -2,6 +2,36 @@
 
 This guide explains how to deploy the Family Planner app on Uberspace using virtualenv, uWSGI, and supervisord.
 
+## Quick Start
+
+```bash
+# 1. Set up directories and clone
+ssh user@your-uberspace.de
+mkdir -p ~/logs ~/data ~/etc/uwsgi ~/src
+cd ~/src && git clone <repo> familyplanner
+cd familyplanner
+
+# 2. Create virtual environment and install
+python3.11 -m venv ~/.virtualenvs/familyplanner
+source ~/.virtualenvs/familyplanner/bin/activate
+pip install -r requirements.txt
+
+# 3. Configure environment
+cat > .env.production << 'EOF'
+ENV=production
+SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
+DATABASE_URL=sqlite:////home/user/data/familyplanner.db
+EOF
+
+# 4. Setup uWSGI and supervisord
+cp uwsgi.ini ~/etc/uwsgi/familyplanner.ini
+# Edit paths in ~/etc/uwsgi/familyplanner.ini (see Step 7 below)
+pip install supervisor
+supervisord -c ~/.config/supervisor/supervisord.conf
+```
+
+See detailed steps below for complete configuration.
+
 ## Prerequisites
 
 - Uberspace account with SSH access

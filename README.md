@@ -2,17 +2,14 @@
 
 A minimal, shared weekly planner web app. All users can see and edit all entries without roles or permissions beyond login.
 
-## Setup
+See [SPEC.md](SPEC.md) for full requirements and design.
 
-### Install Dependencies
+## Quick Start
+
+### Install & Run
 
 ```bash
 pip install -r requirements.txt
-```
-
-### Run Development Server
-
-```bash
 python wsgi.py
 ```
 
@@ -25,73 +22,36 @@ rm familyplanner.db
 python wsgi.py
 ```
 
-## Testing
+## Development
+
+### Testing
 
 ```bash
 pytest tests/ -v
 ```
 
-## Code Quality
+### Code Quality
 
-Run all checks (linting, formatting, security, tests):
+Run all checks:
 
 ```bash
 bash scripts/quality-check.sh
 ```
 
-Or run individual tools:
+Individual tools:
 
 ```bash
-# Linting
-ruff check familyplanner tests
-
-# Format check
-black --check familyplanner tests
-
-# Auto-format code
-black familyplanner tests
-
-# Security checks
-bandit -r familyplanner
+ruff check familyplanner tests          # Lint
+black familyplanner tests               # Format
+black --check familyplanner tests       # Check format
+bandit -r familyplanner                 # Security
 ```
 
-Tools:
-- **Ruff** — Fast Python linter with import sorting
-- **Black** — Code formatter (line length: 100)
-- **Bandit** — Security checks
-- **Pytest** — Test runner configured in `pyproject.toml`
-
-## Development
+See `pyproject.toml` for tool configuration.
 
 ### Project Structure
 
-```
-familyplanner/
-├── config.py              # Dev/test/prod config
-├── app.py                 # App factory
-├── models.py              # SQLAlchemy models
-├── web/
-│   ├── auth.py           # Auth routes
-│   └── calendar.py       # Calendar routes
-├── domain/
-│   ├── week.py           # Week logic
-│   └── recurring.py      # Recurring tasks
-└── templates/            # Jinja2 templates
-```
-
-### Code Organization
-
-- Route handlers in `web/` are thin
-- Business logic in `domain/`
-- No SQL in routes
-- Use type hints
-- Minimize dependencies
-
-### Models
-
-- **User**: username, password_hash, is_active
-- **Entry**: event/task, title, notes, location, times, is_done, audit trail, recurring_template_id (nullable, links to origin template)
-- **RecurringTaskTemplate**: title, weekday, times, is_active, sort_order, audit trail
+See [SPEC.md — Architecture Rules](SPEC.md#architecture-rules) for folder layout and design principles.
 
 ### Configuration
 
@@ -99,16 +59,18 @@ Environment variables (see `config.py`):
 - `ENV`: development, testing, production
 - `SECRET_KEY`: Flask secret
 - `DATABASE_URL`: SQLite path
-- `REGISTRATION_ENABLED`: Enable user registration (default: False)
+- `REGISTRATION_ENABLED`: Enable user registration (default: True)
 
-### Key Features
+## Documentation
 
-- Events (start/end times) and Tasks (due date)
-- Recurring task templates auto-materialize weekly with explicit linkage to prevent duplication
-- Audit trail (who, when for each change)
-- German UI with locale-aware date formatting
-- CSRF protection, secure cookies, password hashing
+- [SPEC.md](SPEC.md) — Requirements, design, data model, business rules
+- [DEPLOYMENT.md](DEPLOYMENT.md) — Production setup on Uberspace
+- [REQUESTS.md](REQUESTS.md) — Active improvement requests
 
-## Deployment
+## License
 
-See `SPEC.md` for production setup (Uberspace, uWSGI, supervisord)
+MIT License. You can use, copy, modify, and distribute this code. It is provided "as is", without warranty or guarantee of any kind. You are responsible for anything you do with it.
+
+## AI Notice
+
+Parts of this project and documentation were created with AI assistance.
