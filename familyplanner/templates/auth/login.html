@@ -18,6 +18,9 @@
             </div>
             <button type="submit" class="btn-primary">Anmelden</button>
         </form>
+        {% if request.args.get('registered') %}
+        <div class="alert alert-success">Registrierung erfolgreich! Bitte melden Sie sich an.</div>
+        {% endif %}
         {% if config.REGISTRATION_ENABLED %}
         <p class="auth-link">
             Noch kein Konto? <a href="{{ url_for('auth.register') }}">Hier registrieren</a>

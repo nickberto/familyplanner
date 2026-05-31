@@ -54,8 +54,8 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        flash("Registrierung erfolgreich! Bitte melden Sie sich an.", "success")
-        return redirect(url_for("auth.login"))
+        # Redirect to login and show a one-time registration-success banner via query param.
+        return redirect(url_for("auth.login", registered=1))
 
     return render_template("auth/register.html")
 
