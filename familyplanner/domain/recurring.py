@@ -99,6 +99,11 @@ def get_or_materialize_recurring_tasks(
         # Create a new entry from the template
         due_datetime = datetime.combine(effective_date, template.default_time_start or time.min)
 
+        # Do not create new recurring entries in the past (unless we're in the current week
+        # where we intentionally move overdue instances to today).
+        if due_datetime.date() < today and not is_current_week:
+            continue
+
         entry = Entry(
             entry_type=Entry.ENTRY_TYPE_TASK,
             title=template.title,

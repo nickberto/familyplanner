@@ -428,3 +428,27 @@ class TestRecurringTaskGeneration:
             entries = get_or_materialize_recurring_tasks(date(2026, 5, 27), user.id)
             assert len(entries) == 1
             assert entries[0].id != previous_week_entry.id
+
+    def test_does_not_create_recurring_entries_in_past(self, app):
+        with app.app_context():
+            user = User(username="testuser")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+
+            template = RecurringTaskTemplate(
+                title="Past Task",
+                notes="Should not be created in past",
+                default_weekday=0,
+                default_time_start=None,
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+            )
+            db.session.add(template)
+            db.session.commit()
+
+            from familyplanner.domain.recurring import get_or_materialize_recurring_tasks
+
+            # Ask to materialize a week far in the past; nothing should be created
+            entries = get_or_materialize_recurring_tasks(date(2020, 1, 6), user.id, today=date(2026, 5, 27))
+            assert len(entries) == 0
