@@ -71,6 +71,26 @@ class TestWeekLogic:
         assert days[6].weekday() == 6  # Sunday
 
 
+class TestWeekView:
+    """Test week view rendering."""
+
+    def test_highlights_current_day(self, client, app):
+        """The current day should be highlighted in the week view."""
+        with app.app_context():
+            user = User(username="testuser")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+
+        client.post("/auth/login", data={"username": "testuser", "password": "testpass123"})
+
+        today = date.today()
+        week_start = get_week_start(today)
+        response = client.get(f"/week?date={week_start.isoformat()}")
+
+        assert response.status_code == 200
+        assert b'class="day-column today"' in response.data
+
 class TestEventValidator:
     """Test event validation."""
 

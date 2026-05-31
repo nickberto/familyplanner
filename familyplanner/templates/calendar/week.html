@@ -41,7 +41,7 @@
     <div class="week-grid">
         {% set weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] %}
         {% for day_idx in range(7) %}
-        <div class="day-column">
+        <div class="day-column {% if (week_start + timedelta(days=day_idx)) == today %}today{% endif %}">
             <div class="day-header">
                 <h3>{{ weekdays[day_idx] }}</h3>
                 <p class="day-date">{{ (week_start + timedelta(days=day_idx)).strftime('%d. %b') }}</p>

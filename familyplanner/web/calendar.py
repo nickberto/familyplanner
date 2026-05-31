@@ -63,6 +63,7 @@ def week():
         next_week=next_week,
         current_user=current_user,
         timedelta=timedelta,
+        today=date.today(),
     )
 
 
