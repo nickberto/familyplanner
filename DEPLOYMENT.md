@@ -215,27 +215,36 @@ familyplanner                        RUNNING   pid 1234, uptime 0:00:10
 
 ## Step 11: Configure Web Server
 
-If using Apache (common on Uberspace), configure a reverse proxy:
+Uberspace provides a very simple web backend mechanism for Flask apps. Once your application is running on a local port, use `uberspace web backend` to expose it.
 
-```apache
-<VirtualHost *:443>
-    ServerName your-domain.example.com
-    
-    SSLEngine on
-    SSLCertificateFile /path/to/cert.pem
-    SSLCertificateKeyFile /path/to/key.pem
-    
-    ProxyPass / http://127.0.0.1:5001/
-    ProxyPassReverse / http://127.0.0.1:5001/
-    
-    ProxyPreserveHost On
-    
-    <Location />
-        Order allow,deny
-        Allow from all
-    </Location>
-</VirtualHost>
+### 11.1 Add the web backend (Uberspace v8)
+
+```bash
+uberspace web backend add / port 5001
 ```
+### 11.2 Check the backend
+
+Verify the backend configuration:
+
+```bash
+uberspace web backend list
+```
+
+You should see an entry like:
+
+```
+/   http   5001
+```
+
+### 11.3 HTTPS on Uberspace
+
+Uberspace usually manages HTTPS for you automatically when your domain is configured. If your domain is active on your account, enabling the web frontend is enough to get a valid TLS certificate.
+
+If you prefer to manage certificates manually, Uberspace also supports Let's Encrypt or its own SSL setup tools. In most cases the easiest option is to use the provider’s built-in certificate workflow rather than configuring SSL yourself.
+
+### 11.4 Optional: firewall / port note
+
+Nothing else needs to be exposed publicly: only the local uWSGI port must be reachable within the Uberspace host. The `uberspace web backend add` command handles the public-facing routing.
 
 ## Step 12: Test the Application
 
