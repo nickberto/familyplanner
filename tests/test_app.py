@@ -2,7 +2,7 @@
 Tests for the Family Planner app.
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -208,6 +208,89 @@ class TestEntryCreation:
             entry = Entry.query.filter_by(title="Test Event").first()
             assert entry is not None
             assert entry.entry_type == "event"
+
+    def test_task_without_due_date_uses_default(self, client, app):
+        """Tasks created without a due date should default to tomorrow at 08:00."""
+        with app.app_context():
+            user = User(username="testuser")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+
+        client.post("/auth/login", data={"username": "testuser", "password": "testpass123"})
+
+        response = client.post(
+            "/entry",
+            data={
+                "entry_type": "task",
+                "title": "Shopping",
+                "notes": "Einkaufsliste",
+                "location": "Supermarkt",
+                # no due_at provided
+            },
+        )
+        assert response.status_code == 302
+
+        with app.app_context():
+            entry = Entry.query.filter_by(title="Shopping").first()
+            assert entry is not None
+            expected_due = datetime.combine(date.today() + timedelta(days=1), time(hour=8))
+            assert entry.due_at == expected_due
+
+    def test_week_view_entries_are_clickable(self, client, app):
+        """Entries in the week view should link to their detail page."""
+        with app.app_context():
+            user = User(username="testuser")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+
+            entry = Entry(
+                entry_type=Entry.ENTRY_TYPE_TASK,
+                title="List Item",
+                notes="Milch\nBrot\nEier",
+                location="Supermarkt",
+                due_at=datetime(2026, 5, 29, 9, 0),
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+            )
+            db.session.add(entry)
+            db.session.commit()
+            entry_id = entry.id
+
+        client.post("/auth/login", data={"username": "testuser", "password": "testpass123"})
+        response = client.get(f"/week?date={date(2026,5,29).isoformat()}")
+        assert response.status_code == 200
+        assert f'href="/entry/{entry_id}"'.encode() in response.data
+
+    def test_entry_detail_view(self, client, app):
+        """The entry detail view should display entry notes and metadata."""
+        with app.app_context():
+            user = User(username="testuser")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+
+            entry = Entry(
+                entry_type=Entry.ENTRY_TYPE_TASK,
+                title="Supermarkt",
+                notes="Milch\nBrot\nEier",
+                location="Supermarkt",
+                due_at=datetime(2026, 5, 29, 9, 0),
+                created_by_user_id=user.id,
+                updated_by_user_id=user.id,
+            )
+            db.session.add(entry)
+            db.session.commit()
+            entry_id = entry.id
+
+        client.post("/auth/login", data={"username": "testuser", "password": "testpass123"})
+        response = client.get(f"/entry/{entry_id}")
+        assert response.status_code == 200
+        assert b"Supermarkt" in response.data
+        assert b"Milch" in response.data
+        assert b"Brot" in response.data
+        assert b"Eier" in response.data
 
 
 class TestRecurringTaskGeneration:

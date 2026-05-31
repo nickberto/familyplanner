@@ -2,7 +2,7 @@
 Calendar and planner routes.
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, time
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -119,10 +119,11 @@ def create_entry():
                 try:
                     due_at = datetime.fromisoformat(due_str)
                 except ValueError:
-                    flash("Invalid datetime format", "error")
+                    flash("Ungültiges Datetime-Format", "error")
                     return redirect(url_for("calendar.week"))
             else:
-                due_at = None
+                tomorrow = date.today() + timedelta(days=1)
+                due_at = datetime.combine(tomorrow, time(hour=8))
 
             entry = Entry(
                 entry_type=Entry.ENTRY_TYPE_TASK,
@@ -217,6 +218,14 @@ def toggle_entry_done(entry_id):
 
     flash(f"Aufgabe markiert als {'erledigt' if entry.is_done else 'nicht erledigt'}", "success")
     return redirect(url_for("calendar.week"))
+
+
+@bp.route("/entry/<int:entry_id>")
+@login_required
+def view_entry(entry_id):
+    """Display details for a single entry."""
+    entry = Entry.query.get_or_404(entry_id)
+    return render_template("calendar/view_entry.html", entry=entry)
 
 
 @bp.route("/recurring-template", methods=["GET", "POST"])

@@ -41,7 +41,7 @@
     <div class="week-grid">
         {% set weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] %}
         {% for day_idx in range(7) %}
-        <div class="day-column {% if (week_start + timedelta(days=day_idx)) == today %}today{% endif %}">
+        <div class="day-column {% if (week_start + timedelta(days=day_idx)) == today %}today{% elif (week_start + timedelta(days=day_idx)) < today %}past{% endif %}">
             <div class="day-header">
                 <h3>{{ weekdays[day_idx] }}</h3>
                 <p class="day-date">{{ (week_start + timedelta(days=day_idx)).strftime('%d. %b') }}</p>
@@ -51,34 +51,41 @@
                 {% set day_entries = grouped_entries[day_idx] %}
                 {% for entry in day_entries %}
                 <div class="entry entry-{{ entry.entry_type }} {% if entry.is_done %}entry-done{% endif %}">
-                    <div class="entry-header">
-                        <h4>{{ entry.title }}</h4>
-                        {% if entry.entry_type == 'task' %}
-                            <form method="POST" action="{{ url_for('calendar.toggle_entry_done', entry_id=entry.id) }}" class="toggle-form">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="checkbox" {% if entry.is_done %}checked{% endif %} onchange="this.form.submit();" title="Abhaken/nicht abhaken">
-                            </form>
+                    <a href="{{ url_for('calendar.view_entry', entry_id=entry.id) }}" class="entry-link" aria-label="Eintrag öffnen"></a>
+                    <div class="entry-content">
+                        <div class="entry-header">
+                            <h4>{{ entry.title }}</h4>
+                            {% if entry.entry_type == 'task' %}
+                                <form method="POST" action="{{ url_for('calendar.toggle_entry_done', entry_id=entry.id) }}" class="toggle-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="checkbox" {% if entry.is_done %}checked{% endif %} onchange="this.form.submit();" title="Abhaken/nicht abhaken">
+                                </form>
+                            {% endif %}
+                        </div>
+
+                        {% if entry.start_at or entry.end_at or entry.due_at %}
+                        <p class="entry-time">
+                            {% if entry.entry_type == 'event' %}
+                                {{ entry.start_at.strftime('%H:%M') if entry.start_at }}
+                                {% if entry.start_at and entry.end_at %}-{% endif %}
+                                {{ entry.end_at.strftime('%H:%M') if entry.end_at }}
+                            {% else %}
+                                {% if entry.due_at %}Fällig am {{ entry.due_at.strftime('%d.%m.%Y %H:%M') }}{% endif %}
+                            {% endif %}
+                        </p>
                         {% endif %}
-                    </div>
 
-                    {% if entry.start_at or entry.end_at %}
-                    <p class="entry-time">
-                        {{ entry.start_at.strftime('%H:%M') if entry.start_at }}
-                        {% if entry.start_at and entry.end_at %}-{% endif %}
-                        {{ entry.end_at.strftime('%H:%M') if entry.end_at }}
-                    </p>
-                    {% endif %}
+                        {% if entry.location %}
+                        <p class="entry-location">📍 {{ entry.location }}</p>
+                        {% endif %}
 
-                    {% if entry.location %}
-                    <p class="entry-location">📍 {{ entry.location }}</p>
-                    {% endif %}
+                        {% if entry.notes %}
+                        <p class="entry-notes">{{ entry.notes }}</p>
+                        {% endif %}
 
-                    {% if entry.notes %}
-                    <p class="entry-notes">{{ entry.notes }}</p>
-                    {% endif %}
-
-                    <div class="entry-meta">
-                        <small>Von {{ entry.updated_by.username if entry.updated_by else entry.created_by.username }} • {{ entry.updated_at.strftime('%d. %b, %H:%M') }}</small>
+                        <div class="entry-meta">
+                            <small>Von {{ entry.updated_by.username if entry.updated_by else entry.created_by.username }} • {{ entry.updated_at.strftime('%d. %b, %H:%M') }}</small>
+                        </div>
                     </div>
 
                     <div class="entry-actions">

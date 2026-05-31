@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ entry.title }} - Familienplaner{% endblock %}
+
+{% block content %}
+<div class="form-container entry-detail-container">
+    <div class="week-header">
+        <div>
+            <h2>{{ entry.title }}</h2>
+            <p class="entry-type">{{ entry.entry_type.title() }}</p>
+        </div>
+    </div>
+
+    <div class="entry-detail-card">
+        {% if entry.entry_type == 'event' %}
+        <div class="detail-row">
+            <strong>Zeit:</strong>
+            <span>{{ entry.start_at.strftime('%d.%m.%Y %H:%M') if entry.start_at else '–' }}{% if entry.end_at %} – {{ entry.end_at.strftime('%d.%m.%Y %H:%M') }}{% endif %}</span>
+        </div>
+        {% else %}
+        <div class="detail-row">
+            <strong>Fällig am:</strong>
+            <span>{{ entry.due_at.strftime('%d.%m.%Y %H:%M') if entry.due_at else '–' }}</span>
+        </div>
+        <div class="detail-row">
+            <strong>Status:</strong>
+            <span>{{ 'Erledigt' if entry.is_done else 'Offen' }}</span>
+        </div>
+        {% endif %}
+
+        {% if entry.location %}
+        <div class="detail-row">
+            <strong>Ort:</strong>
+            <span>{{ entry.location }}</span>
+        </div>
+        {% endif %}
+
+        <div class="detail-row">
+            <strong>Notizen:</strong>
+            <div class="detail-notes">{{ entry.notes or 'Keine Notizen' }}</div>
+        </div>
+
+        <div class="entry-info">
+            <p><small>Erstellt von {{ entry.created_by.username }} am {{ entry.created_at.strftime('%d. %b %Y, %H:%M') }}</small></p>
+            <p><small>Zuletzt bearbeitet von {{ entry.updated_by.username }} am {{ entry.updated_at.strftime('%d. %b %Y, %H:%M') }}</small></p>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('calendar.edit_entry', entry_id=entry.id) }}" class="btn-primary">Bearbeiten</a>
+            <a href="{{ url_for('calendar.week') }}" class="btn-secondary">Zurück zur Woche</a>
+            <form method="POST" action="{{ url_for('calendar.delete_entry', entry_id=entry.id) }}" class="inline-form" onsubmit="return confirm('Diesen Eintrag löschen?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-small btn-danger">Löschen</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
