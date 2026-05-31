@@ -47,7 +47,7 @@ def create_app(config=None) -> Flask:
     # Register Jinja filters
     app.jinja_env.filters["format_german_date"] = GermanDateFormatter.format_date
 
-    # Create database tables
+    # Ensure database tables exist without dropping existing data.
     with app.app_context():
         db.create_all()
 

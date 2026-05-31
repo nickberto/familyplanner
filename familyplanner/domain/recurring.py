@@ -6,10 +6,12 @@ from datetime import date, datetime, time, timedelta
 from typing import List
 
 from familyplanner.domain.week import get_week_start
-from familyplanner.models import Entry, RecurringTaskTemplate, db
+from familyplanner.models import Entry, RecurringTaskTemplate, db, utc_now
 
 
-def get_or_materialize_recurring_tasks(reference_date: date, current_user_id: int) -> List[Entry]:
+def get_or_materialize_recurring_tasks(
+    reference_date: date, current_user_id: int, today: date | None = None
+) -> List[Entry]:
     """
     Get recurring task instances for the given week.
 
@@ -19,14 +21,19 @@ def get_or_materialize_recurring_tasks(reference_date: date, current_user_id: in
     Args:
         reference_date: Any date in the desired week.
         current_user_id: User ID for attribution.
+        today: The current date for moving overdue tasks in the current week.
 
     Returns:
         List of Entry instances (created or existing) for the week.
     """
+    if today is None:
+        today = date.today()
+
     week_start = get_week_start(reference_date)
     week_end = week_start + timedelta(days=6)
     week_start_dt = datetime.combine(week_start, time.min)
     week_end_dt = datetime.combine(week_end, time.max)
+    is_current_week = week_start <= today <= week_end
 
     # Get all active recurring task templates
     templates = (
@@ -40,6 +47,7 @@ def get_or_materialize_recurring_tasks(reference_date: date, current_user_id: in
     for template in templates:
         # Calculate the date for this template's weekday in this week
         target_date = week_start + timedelta(days=template.default_weekday)
+        effective_date = today if is_current_week and target_date < today else target_date
 
         # Prefer explicit recurring-template relation for existing entries in this week.
         existing = Entry.query.filter(
@@ -49,6 +57,18 @@ def get_or_materialize_recurring_tasks(reference_date: date, current_user_id: in
         ).first()
 
         if existing:
+            if (
+                is_current_week
+                and not existing.is_done
+                and existing.due_at
+                and existing.due_at.date() < today
+            ):
+                existing_due_time = existing.due_at.time()
+                existing.due_at = datetime.combine(today, existing_due_time)
+                existing.updated_by_user_id = current_user_id
+                existing.updated_at = utc_now()
+                db.session.add(existing)
+
             created_entries.append(existing)
             continue
 
@@ -62,13 +82,22 @@ def get_or_materialize_recurring_tasks(reference_date: date, current_user_id: in
         ).first()
 
         if fallback:
+            if (
+                is_current_week
+                and not fallback.is_done
+                and fallback.due_at
+                and fallback.due_at.date() < today
+            ):
+                fallback_time = fallback.due_at.time()
+                fallback.due_at = datetime.combine(today, fallback_time)
+
             fallback.recurring_template_id = template.id
             db.session.add(fallback)
             created_entries.append(fallback)
             continue
 
         # Create a new entry from the template
-        due_datetime = datetime.combine(target_date, template.default_time_start or time.min)
+        due_datetime = datetime.combine(effective_date, template.default_time_start or time.min)
 
         entry = Entry(
             entry_type=Entry.ENTRY_TYPE_TASK,

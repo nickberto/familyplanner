@@ -41,7 +41,6 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     WTF_CSRF_ENABLED = False
     REGISTRATION_ENABLED = True  # Enable registration for tests
-    WTF_CSRF_ENABLED = False
 
 
 class ProductionConfig(Config):

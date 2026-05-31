@@ -8,7 +8,7 @@ ruff check familyplanner tests --show-fixes --exit-zero
 
 echo ""
 echo "=== Checking code format with Black ==="
-black --check familyplanner tests --diff --quiet || true
+black --check familyplanner tests --diff || true
 
 echo ""
 echo "=== Running Bandit (security checks) ==="

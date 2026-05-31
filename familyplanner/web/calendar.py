@@ -54,14 +54,11 @@ def week():
 
     return render_template(
         "calendar/week.html",
-        reference_date=reference_date,
         week_start=week_start,
-        entries=entries,
         grouped_entries=grouped,
         recurring_templates=get_active_recurring_templates(),
         prev_week=prev_week,
         next_week=next_week,
-        current_user=current_user,
         timedelta=timedelta,
         today=date.today(),
     )
