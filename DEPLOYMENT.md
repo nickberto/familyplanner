@@ -2,6 +2,26 @@
 
 This guide explains how to deploy the Family Planner app on Uberspace using virtualenv, uWSGI, and supervisord.
 
+If you prefer a hassle-free alternative, this repository also includes a simple `Dockerfile` for containerized deployment. It is designed to work out of the box and avoids the manual virtualenv/uWSGI/supervisord setup.
+
+## Optional Docker Alternative
+
+A ready-to-use Docker image can be built from the repository root.
+
+Build the container:
+
+```bash
+docker build -t familyplanner .
+```
+
+Run it with a mounted data directory:
+
+```bash
+docker run -p 5000:5000 -v "$PWD/data:/data" -e DATABASE_URL=sqlite:////data/familyplanner.db familyplanner
+```
+
+Open `http://localhost:5000` to verify the app is running.
+
 ## Quick Start
 
 ```bash
@@ -17,7 +37,7 @@ source ~/.virtualenvs/familyplanner/bin/activate
 pip install -r requirements.txt
 
 # 3. Configure environment
-cat > .env.production << 'EOF'
+cat > .env.production << EOF
 ENV=production
 SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
 DATABASE_URL=sqlite:////home/user/data/familyplanner.db
@@ -79,7 +99,7 @@ pip install -r requirements.txt
 Create a `.env` file with your configuration:
 
 ```bash
-cat > .env.production << 'EOF'
+cat > .env.production << EOF
 ENV=production
 SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
 DATABASE_URL=sqlite:////home/user/data/familyplanner.db
@@ -138,6 +158,9 @@ Create supervisord configuration:
 
 ```bash
 cat > ~/.config/supervisor/supervisord.conf << 'EOF'
+[supervisord]
+nodaemon=true
+
 [unix_http_server]
 file=/home/user/run/supervisor.sock
 
