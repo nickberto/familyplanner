@@ -151,6 +151,43 @@ def get_entries_for_week(reference_date: date) -> List[Entry]:
     return entries
 
 
+def move_overdue_tasks_to_today(current_user_id: int, today: date | None = None) -> None:
+    """
+    Move all incomplete tasks with due dates in the past to today.
+    
+    This ensures that incomplete tasks that have passed their due date
+    are automatically rescheduled to today, keeping the task list current.
+    
+    Args:
+        current_user_id: User ID for attribution when updating tasks.
+        today: The current date to use as the target date. Defaults to date.today().
+    """
+    if today is None:
+        today = date.today()
+    
+    today_dt = datetime.combine(today, time.min)
+    yesterday_dt = today_dt - timedelta(seconds=1)  # End of yesterday
+    
+    # Find all incomplete tasks with due_at in the past
+    overdue_tasks = Entry.query.filter(
+        Entry.entry_type == Entry.ENTRY_TYPE_TASK,
+        Entry.is_done == False,
+        Entry.due_at.isnot(None),
+        Entry.due_at <= yesterday_dt
+    ).all()
+    
+    for task in overdue_tasks:
+        # Preserve the original time, just move the date to today
+        original_time = task.due_at.time() if task.due_at else time(12, 0)
+        task.due_at = datetime.combine(today, original_time)
+        task.updated_by_user_id = current_user_id
+        task.updated_at = utc_now()
+        db.session.add(task)
+    
+    if overdue_tasks:
+        db.session.commit()
+
+
 def entries_by_weekday(entries: List[Entry]) -> dict:
     """
     Group entries by weekday (0-6 = Mon-Sun).

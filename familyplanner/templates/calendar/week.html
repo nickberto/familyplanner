@@ -49,6 +49,9 @@
 
             <div class="entries">
                 {% set day_entries = grouped_entries[day_idx] %}
+                {% if not day_entries %}
+                <a href="{{ url_for('calendar.create_entry', date=(week_start + timedelta(days=day_idx)).strftime('%Y-%m-%d'), time='12:00') }}" class="empty-state-link-block">Keine Einträge</a>
+                {% else %}
                 {% for entry in day_entries %}
                 <div class="entry entry-{{ entry.entry_type }} {% if entry.is_done %}entry-done{% endif %}">
                     <a href="{{ url_for('calendar.view_entry', entry_id=entry.id) }}" class="entry-link" aria-label="Eintrag öffnen"></a>
@@ -96,12 +99,35 @@
                         </form>
                     </div>
                 </div>
-                {% else %}
-                <p class="empty-state">Keine Einträge</p>
                 {% endfor %}
+                {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
 </div>
 {% endblock %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Make entry-content clickable to open entry details
+    const entryContents = document.querySelectorAll('.entry-content');
+    entryContents.forEach(function(content) {
+        content.addEventListener('click', function(e) {
+            // Don't trigger if clicking on form elements
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'FORM' || 
+                e.closest('form') || e.target.closest('.entry-actions')) {
+                return;
+            }
+            // Find the parent entry and click its link
+            const entry = content.closest('.entry');
+            if (entry) {
+                const link = entry.querySelector('.entry-link');
+                if (link) {
+                    link.click();
+                }
+            }
+        });
+    });
+});
+</script>

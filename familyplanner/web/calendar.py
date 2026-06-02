@@ -12,6 +12,7 @@ from familyplanner.domain.recurring import (
     get_active_recurring_templates,
     get_entries_for_week,
     get_or_materialize_recurring_tasks,
+    move_overdue_tasks_to_today,
 )
 from familyplanner.domain.week import get_week_start
 from familyplanner.models import Entry, RecurringTaskTemplate, db, utc_now
@@ -43,6 +44,9 @@ def week():
     # Materialize recurring tasks for this week
     get_or_materialize_recurring_tasks(reference_date, current_user.id)
 
+    # Move any overdue incomplete tasks to today
+    move_overdue_tasks_to_today(current_user.id)
+
     # Get all entries for this week
     entries = get_entries_for_week(reference_date)
     grouped = entries_by_weekday(entries)
@@ -68,6 +72,27 @@ def week():
 @login_required
 def create_entry():
     """Create a new entry (event or task)."""
+    # Parse pre-filled date/time from query parameters
+    prefill_date = None
+    prefill_time = None
+    
+    date_str = request.args.get("date")
+    if date_str:
+        try:
+            prefill_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    
+    time_str = request.args.get("time", "12:00")
+    if time_str:
+        try:
+            time_obj = datetime.strptime(time_str, "%H:%M").time()
+            prefill_time = time_obj
+        except ValueError:
+            prefill_time = time(12, 0)
+    else:
+        prefill_time = time(12, 0)
+    
     if request.method == "POST":
         entry_type = request.form.get("entry_type", "").strip()
         title = request.form.get("title", "").strip()
@@ -140,7 +165,11 @@ def create_entry():
         flash("Eintrag erfolgreich erstellt", "success")
         return redirect(url_for("calendar.week"))
 
-    return render_template("calendar/create_entry.html")
+    return render_template(
+        "calendar/create_entry.html",
+        prefill_date=prefill_date,
+        prefill_time=prefill_time,
+    )
 
 
 @bp.route("/entry/<int:entry_id>/edit", methods=["GET", "POST"])

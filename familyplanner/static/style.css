@@ -466,6 +466,39 @@ main {
     padding: 1rem;
 }
 
+.empty-state-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.empty-state-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+.empty-state-link-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100px;
+    color: var(--color-text-light);
+    font-size: 0.85rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: 2px dashed transparent;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+}
+
+.empty-state-link-block:hover {
+    background-color: #f3f4f6;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
 .entry {
     position: relative;
     background-color: var(--color-bg);
@@ -486,6 +519,15 @@ main {
 .entry-actions {
     position: relative;
     z-index: 2;
+}
+
+.entry-content {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.entry:hover .entry-content {
+    opacity: 0.85;
 }
 
 .entry-event {

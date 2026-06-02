@@ -34,19 +34,19 @@
         <div id="event-fields" class="conditional-fields" style="display:none;">
             <div class="form-group">
                 <label for="start_at">Startzeit:</label>
-                <input type="datetime-local" id="start_at" name="start_at">
+                <input type="datetime-local" id="start_at" name="start_at" {% if prefill_date and prefill_time %}value="{{ (prefill_date|string + 'T' + prefill_time|string) }}"{% endif %}>
             </div>
 
             <div class="form-group">
                 <label for="end_at">Endzeit:</label>
-                <input type="datetime-local" id="end_at" name="end_at">
+                <input type="datetime-local" id="end_at" name="end_at" {% if prefill_date and prefill_time %}value="{{ (prefill_date|string + 'T' + '13:00') }}"{% endif %}>
             </div>
         </div>
 
         <div id="task-fields" class="conditional-fields" style="display:none;">
             <div class="form-group">
                 <label for="due_at">Fällig am:</label>
-                <input type="datetime-local" id="due_at" name="due_at">
+                <input type="datetime-local" id="due_at" name="due_at" {% if prefill_date and prefill_time %}value="{{ (prefill_date|string + 'T' + prefill_time|string) }}"{% endif %}>
             </div>
         </div>
 
