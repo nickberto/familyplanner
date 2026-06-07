@@ -36,5 +36,26 @@
     <footer>
         <p>&copy; 2026 Familienplaner.</p>
     </footer>
+
+    <script>
+        // Auto-expand textareas to show all content
+        function autoExpandTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // Initialize all textareas on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const textareas = document.querySelectorAll('textarea');
+            textareas.forEach(textarea => {
+                // Expand on load for pre-filled content
+                autoExpandTextarea(textarea);
+                // Expand on input
+                textarea.addEventListener('input', function() {
+                    autoExpandTextarea(this);
+                });
+            });
+        });
+    </script>
 </body>
 </html>

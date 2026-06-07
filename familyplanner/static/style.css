@@ -216,7 +216,9 @@ main {
 }
 
 .form-group textarea {
-    resize: vertical;
+    resize: none;
+    overflow: hidden;
+    min-height: 100px;
 }
 
 .form-actions {
