@@ -159,7 +159,7 @@ Create supervisord configuration:
 ```bash
 cat > ~/.config/supervisor/supervisord.conf << 'EOF'
 [supervisord]
-nodaemon=true
+nodaemon=false
 
 [unix_http_server]
 file=/home/user/run/supervisor.sock
@@ -199,6 +199,12 @@ pip install supervisor
 
 ```bash
 supervisord -c ~/.config/supervisor/supervisord.conf
+```
+
+If you want it to run as a persistent service, install the user-level systemd unit from this repository:
+
+```bash
+bash ~/src/familyplanner/scripts/install-familyplanner-service.sh
 ```
 
 Check if supervisord is running:
