@@ -7,7 +7,7 @@ if ! command -v systemctl >/dev/null 2>&1; then
 fi
 
 SERVICE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
-mkdir -p "$SERVICE_DIR"
+mkdir -p "$SERVICE_DIR" "$HOME/run" "$HOME/logs" "$HOME/.config/supervisor"
 SERVICE_FILE="$SERVICE_DIR/familyplanner.service"
 
 cat > "$SERVICE_FILE" <<EOF
@@ -20,8 +20,8 @@ Type=forking
 Environment=HOME=${HOME}
 Environment=ENV_HOME=${HOME}
 WorkingDirectory=${HOME}/src/familyplanner
-ExecStart=${HOME}/.virtualenvs/familyplanner/bin/supervisord -c ${HOME}/.config/supervisor/supervisord.conf
-ExecStop=${HOME}/.virtualenvs/familyplanner/bin/supervisorctl -c ${HOME}/.config/supervisor/supervisord.conf shutdown
+ExecStart=/bin/bash -lc 'if [ -f "${HOME}/run/supervisord.pid" ] && kill -0 "$(cat "${HOME}/run/supervisord.pid")" 2>/dev/null; then echo "supervisord already running"; exit 0; fi; exec "${HOME}/.virtualenvs/familyplanner/bin/supervisord" -c "${HOME}/.config/supervisor/supervisord.conf"'
+ExecStop=/bin/bash -lc 'if [ -f "${HOME}/run/supervisord.pid" ] && kill -0 "$(cat "${HOME}/run/supervisord.pid")" 2>/dev/null; then "${HOME}/.virtualenvs/familyplanner/bin/supervisorctl" -c "${HOME}/.config/supervisor/supervisord.conf" shutdown; fi'
 Restart=on-failure
 RestartSec=5
 
